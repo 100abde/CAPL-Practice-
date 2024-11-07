@@ -70,7 +70,7 @@ on message EngineStatus{
     }
             
             }
-on timer timer_1{
+on timer timer_1{   // when timer expires this will be checked 
     if(OverHeated ==1 ){
 	output(warning);
 	setTimer(timer_1,5);
