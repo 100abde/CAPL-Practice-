@@ -1,0 +1,78 @@
+// Network Setup
+// Imagine a CAN network in a car with the following nodes and messages. 
+// We'll focus on three key messages shared between nodes for various purposes.
+
+// 1. Engine Control Module (ECM)
+// Message: EngineStatus on CAN1
+// Signals:
+// RPM: Engine speed in revolutions per minute (16-bit integer, range 0-8000).
+// EngineTemp: Engine temperature in degrees Celsius (8-bit integer, range 0-255).
+// Status: Engine status indicator (1 byte, 0 = Off, 1 = On, 2 = Fault).
+// 2. Transmission Control Module (TCM)
+// Message: GearPosition on CAN1
+// Signals:
+// CurrentGear: Current gear position (1 byte, 0 = Park, 1 = Reverse, 2 = Neutral, 3 = Drive).
+// ShiftRequest: Request to shift gears (1 byte, 0 = No request, 1 = Shift up, 2 = Shift down).
+// 3. Body Control Module (BCM)
+// Message: VehicleSpeed on CAN2
+// Signals:
+// Speed: Vehicle speed in km/h (16-bit integer, range 0-300).
+// BrakeStatus: Brake pedal status (1 byte, 0 = Released, 1 = Pressed).
+// DoorStatus: Door status (1 byte, 0 = All closed, 1 = Driver open, 2 = Passenger open, 3 = Rear open).
+// Complex Tasks
+// Using this network setup, here are some complex tasks that require a combination of message handling,
+//  condition checking, and timing. Try implementing each task in CAPL.
+
+// Task 1: Overheat Warning with Timed Alert
+// Write a CAPL script that:
+
+// Monitors the EngineStatus message on CAN1.
+// If the EngineTemp signal exceeds 100 degrees Celsius while the Status signal is 1 (Engine On), trigger an overheat warning by:
+// Sending a message called OverheatWarning on CAN1 with the first byte set to 0xAA.
+// Start a timer when this condition is met.
+// Every 5 seconds, as long as the temperature is above 100 degrees and the engine is on, resend the OverheatWarning message.
+// Stop sending warnings if the temperature goes back to 100 or below, or if the engine is turned off.
+
+
+
+
+
+include
+{
+
+}
+
+variable
+{
+
+	message CAN1.OverheatWarning warning;
+	timer timer_1;
+    int OverHeated;
+	
+}
+
+on message EngineStatus{
+
+	if(this.EngineTemp > 100 && this.Status ==1){
+
+            OverHeated = 1 ;
+			warning.byte(0)=0xAA;
+			output(warning);
+			setTimer(timer_1,5);
+            write("Overheat warning triggered!");  
+
+	}else{
+            OverHeated =0;
+            warning.byte(0)=0x00;
+            output(warning);
+            write("Overheat warning stoped!");              
+            cancelTimer(timer_1);
+    }
+            
+            }
+on timer timer_1{
+    if(OverHeated ==1 ){
+	output(warning);
+	setTimer(timer_1,5);
+}
+}
