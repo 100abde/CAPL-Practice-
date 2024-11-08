@@ -51,7 +51,7 @@ variable
 	
 }
 
-on message EngineStatus{
+on message CAN1.EngineStatus{
 
 	if(this.EngineTemp > 100 && this.Status ==1){
 
@@ -75,4 +75,41 @@ on timer timer_1{   // when timer expires this will be checked
 	output(warning);
 	setTimer(timer_1,5);
 }
+}
+
+
+/////////////////////////////////////////////////////////////////////////////////task 2 /////////////////////////////////
+
+// Task 2: Speed Limit Violation and Automatic Gear Shift Request
+// Write a CAPL script that:
+// 	1. Listens to the VehicleSpeed message on CAN2.
+// 	2. If the Speed exceeds 120 km/h while CurrentGear in the GearPosition message (CAN1) is in Drive (value = 3), send a ShiftRequest 
+// message with ShiftRequest signal set to 1 (request to shift up).
+// 	3. Also, log a warning in the output window with the text: "Speed limit exceeded in Drive mode! Shift up requested."
+// 	4. Reset this logic if the speed drops below 120 km/h or if the CurrentGear is not in Drive.
+
+
+variable{
+    message CAN2.VehicleSpeed BCM;
+    message CAN1.GearPosition Gear;
+}
+
+on message BCM
+{
+ 
+    if(this.speed > 120 && Gear.CurrentGear == 3 ){
+        if(Gear.ShiftRequest != 1){
+
+        Gear.ShiftRequest = 1;
+        write("Speed limit exceeded in Drive mode! Shift up requested.");
+        
+
+        }
+
+    }else{
+        if(Gear.ShiftRequest != 0){
+        Gear.ShiftRequest = 0;
+        }
+    }
+    output(Gear)  //output(Gear.ShiftRequest) you can output a signal alone if your configurations of the tool are not signal-based messaging supported)
 }
